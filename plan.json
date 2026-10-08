@@ -1,0 +1,7 @@
+{
+  "plan_total_tons": 4442,
+  "plan_AL_tons": 3139,
+  "plan_CU_tons": 1303,
+  "for_month": "",
+  "_comment": "Edit these numbers every month. for_month is optional: 'YYYY-MM' to warn if data month differs."
+}

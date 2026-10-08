@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EPC Production Monitor — أكتوبر 2026</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="logo"><img src="assets/logo.png" alt="Energya Power Cables"></div>
+  <div>
+    <h1>لوحة متابعة الإنتاج — EPC Production Monitor</h1>
+    <div class="sub" id="subDate">جارِ التحميل…</div>
+  </div>
+  <div class="hbtns">
+    <button class="btn import" id="btnImport" title="استورد ملف تصدير الـ ERP (xls/xlsx) — أو اسحبه وافلته في أي مكان بالصفحة">📂 استيراد ملف ERP</button>
+    <button class="btn" id="btnPlan" title="سجّل أو عدّل خطة الشهر">🎯 الخطة</button>
+    <select id="selMonth" class="selM" title="التنقل بين الشهور المحفوظة في الأرشيف"></select>
+    <button class="btn" id="btnNewMonth" title="يحفظ الشهر الحالي في الأرشيف ويبدأ شهر جديد فاضي">🆕 شهر جديد</button>
+    <button class="btn" id="btnBackupDl" title="تنزيل نسخة احتياطية لكل الشهور والخطة (ملف JSON على جهازك)">⬇️ نسخة</button>
+    <button class="btn" id="btnBackupUp" title="استرجاع نسخة احتياطية من ملف JSON">⬆️ استرجاع</button>
+    <button class="btn" id="btnReset">↺ الفلاتر</button>
+    <button class="btn" id="btnPrint">🖨️ طباعة</button>
+  </div>
+  <input type="file" id="fileInp" accept=".xls,.xlsx,.xlsm,.csv" style="display:none">
+  <input type="file" id="fileBackup" accept=".json,application/json" style="display:none">
+</header>
+
+<div class="banner" id="banner">
+  <span>💡</span>
+  <div id="bannerTxt"></div>
+  <span class="x" id="bannerX">✕</span>
+</div>
+
+<div class="kpis">
+  <div class="kpi"><div class="t">✅ اللي خلص — الإنتاج الفعلي</div><div class="v"><span id="kActual">–</span> <span class="u">طن</span></div><div class="s" id="kActualS"></div><div class="bar"><i id="kActualBar" style="width:0"></i><b id="kActualMark" style="left:0"></b></div></div>
+  <div class="kpi"><div class="t">⏳ الفاضل من الخطة</div><div class="v"><span id="kRem">–</span> <span class="u">طن</span></div><div class="s" id="kRemS"></div><div class="bar"><i id="kRemBar" style="width:0;background:linear-gradient(90deg,#dc2626,#f59e0b)"></i></div></div>
+  <div class="kpi"><div class="t">🎯 نسبة التحقيق من الخطة</div><div class="v" id="kRatio">–</div><div class="s" id="kRatioS"></div></div>
+  <div class="kpi"><div class="t">⚖️ المعدل اليومي الفعلي</div><div class="v"><span id="kPace">–</span> <span class="u">طن/يوم</span></div><div class="s" id="kPaceS"></div></div>
+  <div class="kpi"><div class="t">📈 توقع نهاية الشهر</div><div class="v"><span id="kFc">–</span> <span class="u">طن</span></div><div class="s" id="kFcS"></div></div>
+  <div class="kpi"><div class="t">📏 إجمالي الأطوال</div><div class="v"><span id="kKm">–</span> <span class="u">كم</span></div><div class="s" id="kKmS"></div></div>
+  <div class="kpi"><div class="t">🌍 حصة التصدير</div><div class="v" id="kExp">–</div><div class="s" id="kExpS"></div></div>
+  <div class="kpi"><div class="t">⏸️ تحت QC Hold</div><div class="v"><span id="kHold">–</span> <span class="u">طرد</span></div><div class="s" id="kHoldS"></div></div>
+  <div class="kpi"><div class="t">👥 عملاء / أوامر تشغيل</div><div class="v" id="kCust">–</div><div class="s" id="kCustS"></div></div>
+</div>
+
+<div class="slicers">
+  <div class="sl-row"><span class="sl-t">📅 اليوم</span><span id="slDays" class="chips"></span></div>
+  <div class="sl-row"><span class="sl-t">🧵 العائلة</span><span id="slFams" class="chips"></span></div>
+  <div class="sl-row"><span class="sl-t">🔎 فلاتر</span><span id="slMkt" class="chips"></span><span class="sl-t auto">🔌 الموصل</span><span id="slCon" class="chips"></span><span class="sl-t auto">✅ الجودة</span><span id="slQc" class="chips"></span></div>
+  <div class="sl-row"><span class="sl-t">👤 العميل</span><select id="selCust" class="sel"></select><span class="sl-t auto">⚙️ الماكينة</span><select id="selMac" class="sel"></select><span class="filterbar" id="filterBar"></span></div>
+</div>
+
+<div class="grid">
+  <div class="card c8"><h3>📈 الإنتاج التراكمي مقابل الخطة</h3><div class="hint" id="cumHint">الخط الأزرق = الفعلي التراكمي (طن كامل: موصلات + Screen + Armour) · الأصفر المتقطع = الخطة موزعة على أيام الشهر · hover للتفاصيل</div><div id="cumChart"></div><div class="legend-row"><span><b style="background:#1976d2"></b>الفعلي التراكمي</span><span id="lgPlan"><b style="background:#d97706"></b>الخطة التراكمية</span></div></div>
+  <div class="card c4"><h3>🌍 السوق — Export / Local</h3><div class="hint">بالطن — اضغط للفلترة</div><div id="mktDonut"></div></div>
+  <div class="card c8"><h3>📊 الإنتاج اليومي — Power / Telecom</h3><div class="hint">طن/يوم (شامل Screen + Armour — على عكس الشيت القديم) · Power = LV+MV+HV+OH · Telecom = BC+CC+IC</div><div id="dailyChart"></div><div class="legend-row"><span><b style="background:linear-gradient(180deg,#42a5f5,#1976d2)"></b>Power</span><span><b style="background:#f59e0b"></b>Telecom</span></div></div>
+  <div class="card c4"><h3>🧵 عائلات الإنتاج</h3><div class="hint">بالطن — اضغط على القطاع للفلترة</div><div id="famDonut"></div></div>
+  <div class="card c6"><h3>🏆 أعلى العملاء إنتاجاً</h3><div class="hint">طن — اضغط على العميل للفلترة</div><div id="custBars"></div></div>
+  <div class="card c6"><h3>⚙️ الماكينات</h3><div class="hint">طن — اضغط على الماكينة للفلترة</div><div id="macBars"></div></div>
+  <div class="card c6"><h3>🧪 المواد — AL / CU / Screen / Armour</h3><div class="hint">طن ونسبتها من الإجمالي</div><div id="matBars"></div></div>
+  <div class="card c6"><h3>✅ حالة الجودة (QC)</h3><div class="hint">عدد الطرود — اضغط للفلترة</div><div id="qcDonut"></div></div>
+  <div class="card c12"><h3>📋 تفاصيل الطرود</h3><div class="hint" id="tblHint"></div><div id="tableWrap"></div><div class="pager" id="pager"></div></div>
+</div>
+
+<footer>
+  <div class="card" style="padding:9px 16px;text-align:center">
+    <span id="fUpd" style="color:var(--mut);font-size:11.5px"></span>
+  </div>
+</footer>
+
+</div>
+<div id="dropOv"><div>📂 افلت ملف الـ ERP هنا<br><small>0040_qa.xls أو xlsx — هيتحلل ويتعرض فوراً</small></div></div>
+<div class="modal-bg" id="planModal">
+  <div class="modal">
+    <h3>🎯 خطة الشهر (بالطن)</h3>
+    <label>إجمالي الخطة<input type="number" id="plTotal" min="0" step="1" placeholder="مثال: 4442"></label>
+    <label>خطة الألومنيوم AL (اختياري)<input type="number" id="plAL" min="0" step="1" placeholder="مثال: 3139"></label>
+    <label>خطة النحاس CU (اختياري)<input type="number" id="plCU" min="0" step="1" placeholder="مثال: 1303"></label>
+    <div class="mrow">
+      <button class="btn primary" id="plSave">حفظ الخطة</button>
+      <button class="btn" id="plFile">رجوع لخطة الملف</button>
+      <button class="btn" id="plClose">إلغاء</button>
+    </div>
+    <div class="mhint">الخطة بتتحفظ في المتصفح على الجهاز ده — تفضل موجودة في كل مرة تفتح فيها الداشبورد، حتى بعد استيراد ملف جديد. خليها صفر لمسح الخطة.</div>
+  </div>
+</div>
+<div id="tip"></div>
+
+<script src="js/vendor/xlsx.full.min.js"></script>
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
