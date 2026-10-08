@@ -280,6 +280,7 @@ def main():
     datajs = ("window.DASH_DATA=" + raw_json.replace("</", "<\\/") + ";\n"
               "window.DASH_CONFIG=" + json.dumps(config, ensure_ascii=False).replace("</", "<\\/") + ";\n")
     (DIST / "js" / "data.js").write_text(datajs, encoding="utf-8")
+    (PROJECT_ROOT / "js" / "data.js").write_text(datajs, encoding="utf-8")
 
     # ---- standalone single file ----
     (DIST / "standalone.html").write_text(build_standalone(), encoding="utf-8")
